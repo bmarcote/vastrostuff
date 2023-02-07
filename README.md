@@ -10,7 +10,8 @@ This container is meant to contain all basic tools and programs that a radio ast
 - AIPS (31DEC21 version)
 - CASA
 - Difmap (2.5q version)
-
+- pySCHED
+- JIVEPlotter (jplotter)
 
 ## Python 3.8 and 3.11
 
