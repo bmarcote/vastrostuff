@@ -1,0 +1,75 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%post
+    apt-get -y update
+    apt-get -y upgrade
+    apt -y install less git-svn git wget rsync curl \
+        libncurses5-dev libx11-dev libxext6 perl \
+        libtinfo5 \
+        gcc gfortran pgplot5 python3.8 python3-pip \
+        gc
+
+    echo "8\n1" | apt-get -y python3-casacore 
+    apt -y install software-properties-common
+    add-apt-repository ppa:deadsnakes/ppa
+    apt -y install python3.11 python3.11-distutils
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.8
+
+    # Cleanning all the shit
+    apt -y autoremove
+    rm -rf /var/lib/apt/lists/*
+
+    # Installing Difmap
+    wget ftp://ftp.astro.caltech.edu/pub/difmap/difmap2.5q.tar.gz && \
+    tar xzvf difmap2.5q.tar.gz && \
+    cd uvf_difmap_2.5q && \
+    sed 's:HELPDIR="`pwd`/help":HELPDIR="/opt/difmap/help":g' configure && \
+    ./configure linux-ia64-gcc && \
+    ./makeall && \
+    cd .. && \
+    mv uvf_difmap_2.5q /opt/difmap && \
+    cp /opt/difmap/difmap /usr/local/bin/ && \
+    rm -rf difmap2.5q.tar.gz
+
+    # Installing AIPS
+    groupadd aipsgrp
+    useradd -c "AIPS" -g aipsgrp -m aips
+    usermod -a -G aipsgrp root
+    mkdir /opt/aips
+    chown -R aips /opt/aips
+    chgrp -R aipsgrp /opt/aips
+    su aips
+    cd $HOME
+    wget ftp://ftp.aoc.nrao.edu/pub/software/aips/31DEC21/install.pl && \
+    echo -e "\naipsgrp\ny\ncas\n\nLNX64\nLNX64\n\n\n\nA4\n\n" | perl install.pl -n && \
+    exit
+
+    # Python 3.8 updates
+    python3.8 -m pip install --upgrade pip
+    python3.8 -m pip install --upgrade setuptools wheel virtualenv
+    python3.8 -m pip install --upgrade numpy scipy matplotlib ipython astropy aplpy astroquery pandas notebook
+    python3.8 -m pip install --upgrade rich rich-argparse typer shellingham scalene natsort mpmath lmfit
+    python3.8 -m pip install --upgrade torch
+
+    # Same for python 3.11. TODO: NO PIP!
+    python3.11 -m pip install --upgrade pip
+    python3.11 -m pip install --upgrade setuptools wheel virtualenv
+    # python3.11 -m pip install --upgrade numpy scipy matplotlib ipython astropy aplpy astroquery pandas notebook
+    # python3.11 -m pip install --upgrade rich rich-argparse typer shellingham scalene natsort mpmath lmfit
+    # python3.11 -m pip install --upgrade torch
+
+    # Same for CASA Python installation TODO: LATER
+
+%environment
+    export LC_ALL=C
+    mkdir -p /opt/
+
+%runscript
+    date
+    . /opt/aips/LOGIN.SH
+
+%labels
+    Author Benito Marcote (marcote@jive.eu)
+    Version 0.1
